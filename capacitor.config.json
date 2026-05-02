@@ -1,0 +1,6 @@
+{
+  "appId": "com.jurispremium.app",
+  "appName": "Juris Premium",
+  "webDir": "dist",
+  "bundledWebRuntime": false
+}
