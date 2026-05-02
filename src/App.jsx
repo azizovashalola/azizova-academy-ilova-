@@ -9,6 +9,7 @@ import Courses from './pages/Courses'
 import TeacherProfile from './pages/TeacherProfile'
 import News from './pages/News'
 import Login from './pages/Login'
+import Register from './pages/Register'
 import { AuthProvider, useAuth } from './context/AuthContext'
 import { Navigate, Outlet } from 'react-router-dom'
 
@@ -27,6 +28,7 @@ function App() {
     <AuthProvider>
       <Routes>
         <Route path="/login" element={<Login />} />
+        <Route path="/register" element={<Register />} />
         
         <Route element={<ProtectedRoute />}>
           <Route path="/" element={<Layout />}>
