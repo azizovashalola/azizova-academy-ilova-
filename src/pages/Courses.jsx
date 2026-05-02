@@ -1,7 +1,52 @@
 import { Link } from 'react-router-dom'
 import { coursesData } from '../data/coursesData'
+import { useState, useEffect } from 'react'
+import { supabase } from '../lib/supabaseClient'
 
 export default function Courses() {
+  const [courses, setCourses] = useState(coursesData.modules)
+  const [videos, setVideos] = useState(coursesData.videos)
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    async function fetchData() {
+      try {
+        const { data: dbCourses, error: cErr } = await supabase.from('monthly_courses').select('*')
+        if (dbCourses && dbCourses.length > 0) {
+          // Format DB data to match UI needs
+          const formattedCourses = dbCourses.map(c => ({
+            id: c.id,
+            title: c.title_uz,
+            icon: 'menu_book', // default
+            colorClass: 'bg-indigo-500',
+            textClass: 'text-indigo-600',
+            totalLessons: 12,
+            completedPercentage: 0,
+            progressClass: 'bg-indigo-600'
+          }))
+          setCourses(formattedCourses)
+        }
+
+        const { data: dbVideos, error: vErr } = await supabase.from('video_lessons').select('*, monthly_courses(title_uz)').limit(4)
+        if (dbVideos && dbVideos.length > 0) {
+          const formattedVideos = dbVideos.map((v, i) => ({
+            id: v.id,
+            title: v.title_uz,
+            subject: v.monthly_courses?.title_uz || 'Umumiy',
+            duration: v.duration_sec ? `${Math.floor(v.duration_sec/60)}:${v.duration_sec%60}` : '15:00',
+            image: v.cover_image || 'https://images.unsplash.com/photo-1589829085413-56de8ae18c73?auto=format&fit=crop&q=80&w=600',
+            featured: i === 0
+          }))
+          setVideos(formattedVideos)
+        }
+      } catch (err) {
+        console.error("Error fetching courses", err)
+      } finally {
+        setLoading(false)
+      }
+    }
+    fetchData()
+  }, [])
   return (
     <div className="px-container_margin max-w-5xl mx-auto">
       {/* Search Section */}
@@ -16,7 +61,7 @@ export default function Courses() {
       <section className="mb-stack_lg">
         <h2 className="font-title-sm text-title-sm mb-stack_md text-primary">Fanlar modullari</h2>
         <div className="flex gap-stack_md overflow-x-auto hide-scrollbar pb-2">
-          {coursesData.modules.map(module => (
+          {courses.map(module => (
             <div key={module.id} className="flex-shrink-0 w-64 bg-surface-container-lowest dark:bg-slate-800 p-stack_md rounded-xl shadow-[0_4px_12px_rgba(31,56,100,0.05)] border border-outline-variant/30">
               <div className={`w-12 h-12 rounded-lg flex items-center justify-center mb-stack_md bg-opacity-20 ${module.colorClass}`}>
                 <span className={`material-symbols-outlined ${module.textClass}`}>{module.icon}</span>
@@ -38,7 +83,7 @@ export default function Courses() {
           <button className="text-primary-container font-label-caps hover:underline">Hammasi</button>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-stack_md">
-          {coursesData.videos.map(video => (
+          {videos.map(video => (
             <Link key={video.id} to="/learning" className={video.featured ? "md:row-span-2 group relative overflow-hidden rounded-xl bg-surface-container-lowest border border-outline-variant/30 shadow-sm cursor-pointer" : "flex gap-stack_md p-stack_sm bg-surface-container-lowest rounded-xl border border-outline-variant/30 group cursor-pointer hover:border-primary/50 transition-colors"}>
               {video.featured ? (
                 <>
